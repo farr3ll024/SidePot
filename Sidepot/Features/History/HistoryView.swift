@@ -4,12 +4,14 @@ import SidepotCore
 
 /// §18: completed-round history. Group/player/course/date filters land in a Phase 5 follow-up.
 struct HistoryView: View {
-    @Query(
-        filter: #Predicate<GolfRound> { $0.status == RoundStatus.completed },
-        sort: \GolfRound.completedAt,
-        order: .reverse
-    )
-    private var rounds: [GolfRound]
+    // See HomeView for why this filters in Swift rather than via `#Predicate`.
+    @Query private var allRounds: [GolfRound]
+
+    private var rounds: [GolfRound] {
+        allRounds
+            .filter { $0.status == .completed }
+            .sorted { ($0.completedAt ?? .distantPast) > ($1.completedAt ?? .distantPast) }
+    }
 
     var body: some View {
         Group {

@@ -3,19 +3,23 @@ import SwiftData
 import SidepotCore
 
 struct HomeView: View {
-    @Query(filter: #Predicate<GolfRound> { $0.status == RoundStatus.active })
-    private var activeRounds: [GolfRound]
-
+    // `#Predicate` has a known limitation comparing directly against enum cases (it can fail to
+    // compile with "key path cannot refer to enum case"), so rounds are fetched unfiltered and
+    // split by status in Swift instead — fine at this app's scale (dozens of rounds, not
+    // millions).
+    @Query private var allRounds: [GolfRound]
     @Query(sort: \GolfGroup.name) private var groups: [GolfGroup]
-
-    @Query(
-        filter: #Predicate<GolfRound> { $0.status == RoundStatus.completed },
-        sort: \GolfRound.completedAt,
-        order: .reverse
-    )
-    private var recentRounds: [GolfRound]
-
     @Query private var players: [Player]
+
+    private var activeRounds: [GolfRound] {
+        allRounds.filter { $0.status == .active }
+    }
+
+    private var recentRounds: [GolfRound] {
+        allRounds
+            .filter { $0.status == .completed }
+            .sorted { ($0.completedAt ?? .distantPast) > ($1.completedAt ?? .distantPast) }
+    }
 
     var body: some View {
         ScrollView {
