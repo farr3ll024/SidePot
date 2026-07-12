@@ -98,6 +98,11 @@ struct SettlementOptimizerTests {
         ]
         let first = try SettlementOptimizer.settle(balances: balances)
         let second = try SettlementOptimizer.settle(balances: balances)
-        #expect(first == second)
+        // Compare payment content, not `id` -- each SettlementPaymentValue gets a fresh random
+        // UUID per call, so the ids themselves are expected to differ between calls even though
+        // the underlying from/to/amount payments are identical.
+        let firstContent = first.map { "\($0.fromPlayerID)-\($0.toPlayerID)-\($0.amount)" }
+        let secondContent = second.map { "\($0.fromPlayerID)-\($0.toPlayerID)-\($0.amount)" }
+        #expect(firstContent == secondContent)
     }
 }

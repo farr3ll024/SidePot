@@ -32,7 +32,13 @@ public enum PersistenceController {
     }
 
     /// An in-memory container for SwiftUI previews and tests, optionally pre-populated.
-    public static func makePreviewContainer(populate: (ModelContainer) -> Void = { _ in }) -> ModelContainer {
+    ///
+    /// `@MainActor` because populate closures (e.g. `PreviewFixtures.populate`) need to touch
+    /// `ModelContainer.mainContext`, which is itself main-actor-isolated. `#Preview` bodies and
+    /// `@MainActor`-marked test methods already run on the main actor, so this doesn't require
+    /// callers to do anything differently.
+    @MainActor
+    public static func makePreviewContainer(populate: @MainActor (ModelContainer) -> Void = { _ in }) -> ModelContainer {
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         do {
             let container = try ModelContainer(for: schema, configurations: [configuration])

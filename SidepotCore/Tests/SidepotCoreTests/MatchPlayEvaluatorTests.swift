@@ -52,8 +52,10 @@ struct MatchPlayEvaluatorTests {
 
         let result = try MatchPlayEvaluator().evaluate(gameID: gameID, context: context, configuration: config)
         let balances = LedgerValidator.balances(from: result.ledgerEntries)
-        #expect(TestSupport.balance(balances, for: p1) == 5)
-        #expect(TestSupport.balance(balances, for: p2) == 5)
+        // Equal-share allocation: each of the 2 losers pays each of the 2 winners stake/2 (5),
+        // so each winner collects 5 from each loser = 10 total (matches the Nassau team example).
+        #expect(TestSupport.balance(balances, for: p1) == 10)
+        #expect(TestSupport.balance(balances, for: p2) == 10)
     }
 
     @Test("A match still short of closing stays unresolved")

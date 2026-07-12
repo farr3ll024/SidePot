@@ -9,6 +9,7 @@ import SidepotCore
 /// this target is for checks that specifically need the app bundle (SwiftData model container
 /// wiring, app-level services). It intentionally stays small; most business logic is already
 /// covered at the SidepotCore layer.
+@MainActor
 final class PersistenceSmokeTests: XCTestCase {
     func testPreviewContainerAcceptsInserts() throws {
         let container = PersistenceController.makePreviewContainer()
