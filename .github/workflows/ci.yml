@@ -62,3 +62,45 @@ jobs:
             -scheme Sidepot \
             -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.name }}" \
             -skipMacroValidation
+
+  unsigned-ipa:
+    name: Build an unsigned .ipa for sideloading (AltStore/AltServer)
+    needs: xcodebuild
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      # Real-device archive with code signing disabled. This produces an unsigned .app -- it's
+      # not installable as-is. AltServer (running on the sideloader's own computer) re-signs it
+      # from scratch using their free Apple ID when they add it to AltStore, so no Apple
+      # Developer account or certificate is needed on the CI side at all.
+      - name: Archive (real device, unsigned)
+        run: |
+          xcodebuild archive \
+            -project Sidepot.xcodeproj \
+            -scheme Sidepot \
+            -archivePath build/Sidepot.xcarchive \
+            -destination 'generic/platform=iOS' \
+            -skipMacroValidation \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES
+
+      - name: Package .ipa
+        run: |
+          mkdir -p ipa/Payload
+          cp -r build/Sidepot.xcarchive/Products/Applications/Sidepot.app ipa/Payload/
+          cd ipa && zip -r ../Sidepot-unsigned.ipa Payload
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Sidepot-unsigned-ipa
+          path: Sidepot-unsigned.ipa
+          retention-days: 14
