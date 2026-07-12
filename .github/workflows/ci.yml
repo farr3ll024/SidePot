@@ -53,7 +53,32 @@ jobs:
             -project Sidepot.xcodeproj \
             -scheme Sidepot \
             -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.name }}" \
+            -derivedDataPath build \
             -skipMacroValidation
+
+      - name: Boot simulator, install, launch, and screenshot
+        run: |
+          set -x
+          UDID=$(xcrun simctl list devices available -j \
+            | python3 -c "import json,sys; data=json.load(sys.stdin); ids=[d['udid'] for runtime in data['devices'].values() for d in runtime if d['name']=='${{ steps.sim.outputs.name }}']; print(ids[-1])")
+          APP_PATH=$(find build/Build/Products -maxdepth 1 -name "*.app" -type d | head -1)
+          echo "App: $APP_PATH, simulator: $UDID"
+
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl install "$UDID" "$APP_PATH"
+          xcrun simctl launch "$UDID" com.example.sidepot
+
+          # Give SwiftUI a moment to render the first frame before capturing it.
+          sleep 4
+          mkdir -p screenshots
+          xcrun simctl io "$UDID" screenshot screenshots/01-first-launch.png
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Sidepot-simulator-screenshots
+          path: screenshots/
+          retention-days: 14
 
       - name: Test (SidepotTests + SidepotUITests)
         run: |
