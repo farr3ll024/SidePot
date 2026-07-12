@@ -1,0 +1,88 @@
+name: Sidepot
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+  developmentLanguage: en
+
+packages:
+  SidepotCore:
+    path: SidepotCore
+
+targets:
+  Sidepot:
+    type: application
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: Sidepot
+        excludes:
+          - "**/*.md"
+    dependencies:
+      - package: SidepotCore
+        product: SidepotCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.sidepot
+        PRODUCT_NAME: Sidepot
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ENABLE_PREVIEWS: true
+        SWIFT_EMIT_LOC_STRINGS: true
+    info:
+      path: Sidepot/Resources/Info.plist
+      properties:
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+
+  SidepotTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: SidepotTests
+    dependencies:
+      - target: Sidepot
+    settings:
+      base:
+        SWIFT_VERSION: "6.0"
+        GENERATE_INFOPLIST_FILE: true
+
+  SidepotUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: SidepotUITests
+    dependencies:
+      - target: Sidepot
+    settings:
+      base:
+        SWIFT_VERSION: "6.0"
+        GENERATE_INFOPLIST_FILE: true
+
+schemes:
+  Sidepot:
+    build:
+      targets:
+        Sidepot: all
+        SidepotTests: [test]
+        SidepotUITests: [test]
+    test:
+      targets:
+        - SidepotTests
+        - SidepotUITests
+      gatherCoverageData: true
+    run:
+      config: Debug
