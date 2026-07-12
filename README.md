@@ -13,10 +13,12 @@ documented decision.
 
 ## Status
 
-**This build has never been compiled.** It was authored in a Linux environment with no Swift
-toolchain reachable (see `DEVIATIONS.md`'s "Environment constraint" section) — everything here is
-an unverified first draft. Treat the extensive test suite as *written*, not *passing*, until
-someone runs it on macOS.
+Verified green as of commit `ce58fe4` via CI (`.github/workflows/ci.yml`) on GitHub's macOS
+runners: `SidepotCore`'s full test suite passes under `swift test`, and the `Sidepot` app target
+(plus `SidepotTests`/`SidepotUITests`) builds and tests clean under `xcodebuild`. This was authored
+in a Linux environment with no local Swift toolchain reachable (see `DEVIATIONS.md`'s "Environment
+constraint" section) — CI is what actually compiled and ran it, not local iteration, so treat any
+change made without a subsequent green CI run as unverified again.
 
 What's implemented:
 

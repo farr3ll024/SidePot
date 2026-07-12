@@ -8,13 +8,36 @@ self-contradictory, favoring the simplest change consistent with the rest of the
 ## Environment constraint (not a spec deviation, but material)
 
 This implementation was authored in a Linux container with no Swift toolchain reachable
-(`download.swift.org` is blocked by the sandbox's network policy, and no Docker daemon is
-available to run an official `swift` image). **No file in this repository has been compiled,
-type-checked, or run.** Everything under `SidepotCore/` and `Sidepot/` needs to be opened in
-Xcode on macOS (or run through `swift build` / `swift test` for the `SidepotCore` package alone)
-before it can be trusted. Treat this as an unverified first draft of the domain layer, not a
-tested one, despite the extensive test suite written alongside it — the tests have never
-actually been executed.
+(`download.swift.org` is blocked by the sandbox's network policy, and no Docker daemon was
+initially available; once a daemon was started, Docker Hub's blob-storage CDN was *also* blocked
+by the same network policy). Compilation was instead verified via GitHub Actions on GitHub-hosted
+macOS runners (`.github/workflows/ci.yml`) — see the repo's Actions tab for current status. As of
+commit `ce58fe4`, `SidepotCore`'s full test suite passes under `swift test` and the `Sidepot` app
+target builds and tests clean under `xcodebuild`. Two real, non-trivial issues were only caught
+this way and are worth knowing about even though they're now fixed:
+
+- **`swift test` runs on the macOS host, not an iOS simulator.** `SidepotCore/Package.swift`
+  originally declared only `.iOS(.v18)` as a platform, which meant SwiftData's macOS-14+ APIs
+  (`Schema`, `ModelContainer`, ...) failed availability checking when the test executable was
+  built for macOS. Fixed by adding `.macOS(.v14)` alongside `.iOS(.v18)`.
+- **`#Predicate` cannot reliably compare directly against an enum case** (`$0.status ==
+  RoundStatus.active` failed to compile with "key path cannot refer to enum case"). `HomeView` and
+  `HistoryView` now fetch `GolfRound` unfiltered via `@Query` and filter/sort by status in Swift
+  instead, sidestepping the macro limitation — fine at this app's scale.
+- **`XCTestCase` test methods are not implicitly `@MainActor`-isolated** under Swift 6 strict
+  concurrency, even though they routinely touch main-actor-isolated APIs (`ModelContainer
+  .mainContext`, `XCUIApplication`). `SidepotTests` and `SidepotUITests`' test classes are now
+  marked `@MainActor`, and `PersistenceController.makePreviewContainer` is `@MainActor` too since
+  it needs to call `@MainActor` populate closures like `PreviewFixtures.populate`.
+
+Two Swift Testing assertions in `SidepotCoreTests` were also wrong (not the evaluators they were
+testing) and got caught the same way: `SettlementOptimizerTests.deterministicOrdering` compared
+full `SettlementPaymentValue` equality including a randomly-generated `id` field that legitimately
+differs between two separate `settle()` calls; `MatchPlayEvaluatorTests.teamBestBall` asserted the
+wrong expected payout (copy/paste drift from the parallel Nassau test). Both are fixed.
+
+If you make further changes without a green CI run afterward, treat them as unverified again —
+nothing here was hand-verified locally at any point.
 
 ## Project generation
 
